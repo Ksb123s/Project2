@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container">
+    <div class="my-3">
+      <table class="table">
+        <thead>
+          <tr class="table-succ-ess">
+            <th scope="col">번호</th>
+            <th scope="col">작성자</th>
+            <th scope="col">제목</th>
+            <th scope="col">링크</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if list %}
+            {% for content in list %}
+              <tr>
+                <th scope="row">
+                  {{content.num}}
+                </th>
+                <th scope="row">
+                  {{content.user}}
+                </th>
+                <td>
+                  <a href="{{content.url}}" class="text-decoration-none text-dark">
+                    {{content.title|truncatechars:30}}
+                  </a>
+                </td>
+                <td scope="row">
+                  {{content.url|truncatechars:20}}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="3">검색된 정보가 존재하지 않습니다.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+
+    </div>
+
+  {% endblock content %}
