@@ -86,110 +86,275 @@ def search(request):
                 time.sleep(interval)
                 return redirect("search")
             case "naver":
-                url = "https://www." + search_engine_name + ".com/"
-                browser.get(url)
-                time.sleep(interval)
-                element = browser.find_element(By.ID, "query")
-                element.send_keys(search_engine_keyword)
-                element.send_keys(Keys.ENTER)
-                time.sleep(interval)
-                naver_list = browser.find_elements(By.CLASS_NAME, "tab")
-                for link in naver_list:
-                    a_link = link.get_attribute("href")
-                    i_text = link.text.strip()
-                    # print(i_text, a_link)
-                    if i_text == detail:
-                        browser.get(a_link)
-                        break
-                time.sleep(interval)
-                scroll_all(browser, interval)
-                soup = BeautifulSoup(browser.page_source, "lxml")
-                match search_engine_name:
-                    case "도서":
-                        # book_list > ul > li:nth-child(1) > div > a.bookListItem_info_top__r54Eg.linkAnchor > div.bookListItem_text_area__9Qmyx > div.bookListItem_title__K9pVs
-                        titles = soup.select(".bookListItem_title__K9pVs")
-                        time.sleep(interval)
-                        # book_list > ul > li:nth-child(1) > div > a.bookListItem_info_top__r54Eg.linkAnchor > div.bookListItem_text_area__9Qmyx > div.bookListItem_detail__uZOWT > div:nth-child(1) > span.bookListItem_define_data__IUMgt
-                        users = soup.select("span.bookListItem_define_data__IUMgt")
-                        time.sleep(interval)
-                        # book_list > ul > li:nth-child(1) > div > div > div > span
-                        prices = soup.select("span.bookPrice_price__OagxI")
-                        time.sleep(interval)
-                        for idx in range(len(users)):
-                            title = titles[idx].text.strip()
-                            user = users[idx].text.strip()
-                            price = prices[idx].text.strip()
-
-                            print(f"유저 : {user}/ 제목 :{title}/ 가격 : {price} ")
-
-                            list.append(
-                                {
-                                    "num": idx + 1,
-                                    "user": user,
-                                    "title": title,
-                                    "url": price,
-                                }
-                            )
-
-                    case "이미지":
-                        contents = browser.find_elements(By.CLASS_NAME, "image_wrap")
-                    case "지식iN":
-                        contents = browser.find_elements(By.CLASS_NAME, "lst_nkin")
-                    case "지식백과":
-                        contents = browser.find_elements(By.CLASS_NAME, "lst_nkindic")
-                    case "인플루언서":
-                        contents = browser.find_elements(
-                            By.CLASS_NAME, "keyword_challenge_wrap"
-                        )
-                    case "동영상":
-                        contents = browser.find_elements(By.CLASS_NAME, "video_item")
-                    case "뉴스":
-                        contents = browser.find_elements(By.CLASS_NAME, "group_news")
-                    case "쇼핑":
-                        contents = browser.find_elements(
-                            By.CLASS_NAME, "basicList_list_basis__uNBZx"
-                        )
-                    case "어학사전":
-                        contents = browser.find_elements(By.ID, "contents")
-                    case "학술정보":
-                        contents = browser.find_elements(
-                            By.CLASS_NAME, "ui_listing_list"
-                        )
-                    case "지도":
-                        contents = browser.current_url
-
-                    case _:
-                        users = soup.select(".user_box_inner > div > a")
-                        time.sleep(1)
-
-                        contents = soup.select(".title_area > a")
-                        time.sleep(1)
-
-                        # imgs = soup.select(".mod_ugc_thumb_area > a > img")
-                        # time.sleep(2)
-
-                        # img_url_list = []
-                        # print("들어가기전 ", len(users))
-                        for idx in range(len(users)):
-                            user = users[idx].text.strip()
-                            title = contents[idx].text.strip()
-                            content_url = contents[idx]["href"]
-                            # img = imgs[idx]["src"]
-                            print(
-                                f"유저 : {user}/ 제목 :{title}/ 링크 : {content_url} "
-                            )
-                            list.append(
-                                {
-                                    "num": idx + 1,
-                                    "user": user,
-                                    "title": title,
-                                    "url": content_url,
-                                }
-                            )
-                        # print("들어간후 ", len(list))
-
-                context = {"list": list}
+                list = naver_crawl(
+                    browser, interval, search_engine_name, search_engine_keyword, detail
+                )
+                context = {"list": list, "keyword": detail}
                 time.sleep(interval)
                 return render(request, "Search/search.html", context)
     context = {"list": list}
     return render(request, "Search/search.html", context)
+
+
+def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, detail):
+    list = []
+    url = "https://www." + search_engine_name + ".com/"
+    browser.get(url)
+    time.sleep(interval)
+    element = browser.find_element(By.ID, "query")
+    element.send_keys(search_engine_keyword)
+    element.send_keys(Keys.ENTER)
+    time.sleep(interval)
+    naver_list = browser.find_elements(By.CLASS_NAME, "tab")
+    for link in naver_list:
+        a_link = link.get_attribute("href")
+        i_text = link.text.strip()
+        # print(i_text, a_link)
+        if i_text == detail:
+            browser.get(a_link)
+            break
+    time.sleep(interval)
+    scroll_all(browser, interval)
+    soup = BeautifulSoup(browser.page_source, "lxml")
+    match i_text:
+        case "도서":
+            print("도서")
+            # book_list > ul > li:nth-child(1) > div > a.bookListItem_info_top__r54Eg.linkAnchor > div.bookListItem_text_area__9Qmyx > div.bookListItem_title__K9pVs > span > span
+            titles = soup.select(
+                ".bookListItem_title__K9pVs > span.bookListItem_text__SL9m9"
+            )
+            time.sleep(interval)
+            # book_list > ul > li:nth-child(1) > div > a.bookListItem_info_top__r54Eg.linkAnchor > div.bookListItem_text_area__9Qmyx > div.bookListItem_detail__uZOWT > div:nth-child(1) > span.bookListItem_define_data__IUMgt
+
+            users = soup.select(
+                ".bookListItem_define_item__Jb5MS > span.bookListItem_define_data__IUMgt"
+            )
+            time.sleep(interval)
+            # book_list > ul > li:nth-child(1) > div > div > div > span.bookPrice_price__OagxI
+            prices = soup.select("span.bookPrice_price__OagxI")
+            time.sleep(interval)
+            # book_list > ul > li:nth-child(1) > div > a.bookListItem_info_top__r54Eg.linkAnchor
+            book_urls = soup.select("a.bookListItem_info_top__r54Eg.linkAnchor")
+            for idx in range(len(users)):
+                title = titles[idx].text.strip()
+                user = users[idx].text.strip()
+                price = prices[idx].text.strip()
+                book_url = book_urls[idx]["href"]
+
+                print(f"유저 : {user}/ 제목 :{title}/ 가격 : {price} ")
+
+                list.append(
+                    {
+                        "num": idx + 1,
+                        "user": user,
+                        "title": title,
+                        "price": price,
+                        "url": book_url,
+                    }
+                )
+
+        case "이미지":
+            images = browser.find_elements(By.CSS_SELECTOR, ".thumb img")
+            # main_pack > section > div.api_subject_bx._fe_image_tab_grid_root.ani_fadein > div > div > div.image_tile._fe_image_tab_grid > div:nth-child(1) > div > a > div.info_title > span
+            titles = soup.select("div.info_title > span")
+            count = 1
+            for img in images:
+                try:
+                    if count > 20:
+                        break
+                    img.click()
+                    time.sleep(2)
+
+                    # 큰이미지 //*[@id="main_pack"]/section[1]/div/div/div[1]/div[2]/div[1]/img
+                    # div.viewer_image img
+                    img_url = browser.find_element(
+                        By.CSS_SELECTOR, "div.viewer_image img"
+                    ).get_attribute("src")
+                    title = titles[count - 1].text.strip()
+                    print(img_url, title)
+
+                    # urlretrieve("다운로드 받을 파일 경로","저장경로")
+                    # urlretrieve(
+                    #     img_url,
+                    #     "C:\source\Project2\django\serch_engine\static\img\crawl_image\ "
+                    #     + search_engine_keyword
+                    #     + str(count)
+                    #     + ".jpg",
+                    # )
+                    list.append({"img_url": img_url, "title": title})
+                    count += 1
+                    print(count)
+                except:
+                    pass
+        case "지식iN":
+            # main_pack > section > div.api_subject_bx > ul > li:nth-child(1) > div > div.question_area > div > a
+            questions = soup.select(".question_area > div > a")
+            time.sleep(interval)
+            # main_pack > section > div.api_subject_bx > ul > li:nth-child(1) > div > div.answer_area > div.answer_group > a
+            answers = soup.select(".answer_group > a")
+            time.sleep(interval)
+            # main_pack > section > div.api_subject_bx > ul > li:nth-child(30) > div > div.answer_area > div.profile_group > div > a > span.thumb > img
+            imgs = soup.select(".profile_group > div > a > span.thumb > img")
+            time.sleep(interval)
+            # main_pack > section > div.api_subject_bx > ul > li:nth-child(1) > div > div.answer_area > div.profile_group > div > a > span.name
+            answer_names = soup.select(".profile_group > div > a > span.name")
+            for idx in range(len(questions)):
+                question = questions[idx].text.strip()
+                answer = answers[idx].text.strip()
+                question_url = questions[idx]["href"]
+                answer_img = imgs[idx]["src"]
+                answer_name = answer_names[idx].text.strip()
+
+                print(
+                    f"답변자 : {answer_name}/답변자 이미지 : {answer_img}/ 답변 :{answer}/ 질문 : {question} / 답변 링크 {question_url}"
+                )
+
+                list.append(
+                    {
+                        "num": idx + 1,
+                        "question": question,
+                        "answer": answer,
+                        "url": question_url,
+                        "answer_img": answer_img,
+                        "answer_name": answer_name,
+                    }
+                )
+
+        case "지식백과":
+            # main_pack > section > div.api_subject_bx.type_noline > ul > li:nth-child(2) > div > div > div.nkindic_tit > h3 > a
+            titles = soup.select(".nkindic_tit > h3")
+
+            # main_pack > section > div.api_subject_bx.type_noline > ul > li:nth-child(1) > div > div > div.nkindic_content > div.content_desc > a
+            contents = soup.select(".content_desc > a")
+            # main_pack > section > div.api_subject_bx.type_noline > ul > li:nth-child(1) > div > div > div.nkindic_content > div.content_desc > .nkindic_source > a
+            users = soup.select(".nkindic_source > a")
+
+            for idx in range(len(users)):
+                title = titles[idx].text.strip()
+                content = contents[idx].text.strip()
+                user = users[idx].text.strip()
+                dict_url = users[idx]["href"]
+
+                list.append(
+                    {
+                        "num": idx + 1,
+                        "user": user,
+                        "title": title,
+                        "content": content,
+                        "url": dict_url,
+                    }
+                )
+
+        case "인플루언서":
+            # _inf_content_root\ _fe_influencer_section > div > div.keyword_challenge_wrap > ul > li:nth-child(1) > div.keyword_box_wrap > div.user_box > div.user_box_inner > div.user_info > div.user_area
+            Influencers = soup.select(".user_info > div.user_area")
+            # _inf_content_root\ _fe_influencer_section > div > div.keyword_challenge_wrap > ul > li:nth-child(1) > div.keyword_box_wrap > div.detail_box > div.title_area > a
+            titles = soup.select(".title_area > a")
+            # _inf_content_root\ _fe_influencer_section > div > div.keyword_challenge_wrap > ul > li:nth-child(1) > div.keyword_box_wrap > div.detail_box > div.dsc_area > a
+            contents = soup.select(".dsc_area > a")
+            # _inf_content_root\ _fe_influencer_section > div > div.keyword_challenge_wrap > ul > li:nth-child(1) > div.keyword_box_wrap > div.user_box > div.user_box_inner > a > div > img
+            thumb_imgs = soup.select(".user_box_inner > a > div > img")
+            for idx in range(len(thumb_imgs)):
+                title = titles[idx].text.strip()
+                content = contents[idx].text.strip()
+                user = Influencers[idx].text.strip()
+                influencer_url = titles[idx]["href"]
+                thumb_img = thumb_imgs[idx]["src"]
+                print(user, title, content)
+                list.append(
+                    {
+                        "num": idx + 1,
+                        "user": user,
+                        "title": title,
+                        "content": content,
+                        "url": influencer_url,
+                        "thumb_img": thumb_img,
+                    }
+                )
+
+        case "동영상":
+            contents = browser.find_elements(By.CLASS_NAME, "video_item")
+        case "뉴스":
+            contents = browser.find_elements(By.CLASS_NAME, "group_news")
+        case "쇼핑":
+            # content > div.style_content__xWg5l > div.basicList_list_basis__uNBZx > div > div:nth-child(1) > div > div > div.product_info_area__xxCTi > div.product_title__Mmw2K > a
+            titles = soup.select(".product_title__Mmw2K > a")
+            time.sleep(interval)
+            # content > div.style_content__xWg5l > div.basicList_list_basis__uNBZx > div > div:nth-child(1) > div > div > div.product_mall_area___f3wo > div.product_mall_title__Xer1m > a.product_mall__hPiEH.linkAnchor
+            # content > div.style_content__xWg5l > div.basicList_list_basis__uNBZx > div > div:nth-child(1) > div > div > div.product_mall_area___f3wo > div.product_mall_title__Xer1m > a.product_mall__hPiEH.linkAnchor > img
+            users = soup.select("a.product_mall__hPiEH ")
+            time.sleep(interval)
+            # b#content > div.style_content__xWg5l > div.basicList_list_basis__uNBZx > div > div:nth-child(1) > div > div > div.product_info_area__xxCTi > div.product_price_area__eTg7I > strong > span.price > span
+            prices = soup.select(".price > span")
+            time.sleep(interval)
+            for idx in range(len(titles)):
+                title = titles[idx].text.strip()
+                if users[idx].select_one("img") is not None:
+                    user = users[idx].select_one("img")["alt"]
+                else:
+                    user = users[idx].text.strip()
+                shop_url = titles[idx]["href"]
+                price = prices[idx].text.strip()
+
+                print(f"유저 : {user}/ 제목 :{title}/ 가격 : {price} ")
+
+                list.append(
+                    {
+                        "num": idx + 1,
+                        "user": user,
+                        "title": title,
+                        "price": price,
+                        "url": shop_url,
+                    }
+                )
+        # 수정 봐야함  어학 사전
+        case "어학사전":
+            soup = BeautifulSoup(browser.page_source, "html.parser")
+            # print(soup)
+            # contents > div:nth-child(2)
+            sections = soup.select("#contents > .section")
+            print(sections)
+            for idx in range(len(sections)):
+                section = sections[idx]
+                list.append({"source": section.prettify()})
+        case "학술정보":
+            contents = browser.find_elements(By.CLASS_NAME, "ui_listing_list")
+        case "지도":
+            contents = browser.current_url
+        # 블로그 카페
+        case _:
+            users = soup.select(".user_box_inner > div > a")
+            time.sleep(1)
+
+            contents = soup.select(".title_area > a")
+            time.sleep(1)
+
+            # imgs = soup.select(".mod_ugc_thumb_area > a > img")
+            # time.sleep(2)
+
+            # img_url_list = []
+            # print("들어가기전 ", len(users))
+            for idx in range(len(users)):
+                user = users[idx].text.strip()
+                title = contents[idx].text.strip()
+                content_url = contents[idx]["href"]
+                # img = imgs[idx]["src"]
+                print(f"유저 : {user}/ 제목 :{title}/ 링크 : {content_url} ")
+                list.append(
+                    {
+                        "num": idx + 1,
+                        "user": user,
+                        "title": title,
+                        "url": content_url,
+                    }
+                )
+            # print("들어간후 ", len(list))
+    return list
+
+
+def daum_crawl():
+    pass
+
+
+def google_crawl():
+    pass
