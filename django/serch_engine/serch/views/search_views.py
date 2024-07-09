@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 def set_chrome_driver():
     options = ChromeOptions()
     # options.add_argument("headless")
-    # options.add_argument("--start-maximized")
+    options.add_argument("--start-minimized")
     driver = webdriver.Chrome(
         service=Service(ChromeDriverManager().install()), options=options
     )
@@ -89,7 +89,11 @@ def search(request):
                 list = naver_crawl(
                     browser, interval, search_engine_name, search_engine_keyword, detail
                 )
-                context = {"list": list, "keyword": detail}
+                context = {
+                    "list": list,
+                    "detail": detail,
+                    "keyword": search_engine_keyword,
+                }
                 time.sleep(interval)
                 return render(request, "Search/search.html", context)
     context = {"list": list}

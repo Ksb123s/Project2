@@ -17,3 +17,6 @@ function categoryChange(e) {
     target.appendChild(opt);
   }
 }
+window.onload = function () {
+  // Toggle the side navigation
+};

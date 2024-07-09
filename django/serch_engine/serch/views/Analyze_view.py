@@ -38,5 +38,5 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
-def analyze(response):
-    pass
+def analyze(request):
+    return render(request, "Search/analyze.html")

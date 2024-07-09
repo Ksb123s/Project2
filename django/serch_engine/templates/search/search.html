@@ -1,8 +1,24 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
+
+  <div class="container-fluid pb-3">
+    <div class="d-grid gap-3" style="grid-template-columns: 1fr 2fr;">
+      <div class="bg-body-tertiary border rounded-3">
+        <br>Hellow 검색 엔진에 오신걸 환영합니다.<br>
+        <br>이 사이트에 이용방식에 대해 알려 드리겠습니다.<br>
+        <br><br>
+        <br><br>
+        <br><br>
+      </div>
+      <div class="bg-body-tertiary border rounded-3">
+        <br><br><br><br><br><br><br><br><br><br>
+      </div>
+    </div>
+  </div>
   <div class="container">
     <div class="my-3">
-      {% if keyword == '이미지' %}
+      {% if detail == '이미지' %}
         <div class="container-fluid">
           <div class="row">
             {% for content in list %}
@@ -17,78 +33,120 @@
             {% endfor %}
           </div>
         </div>
-      {% elif keyword == '어학사전' %}
+      {% elif detail == '어학사전' %}
         {% for content in list %}
           {{content.source|safe }}
         {% endfor %}
-      {% elif keyword == '지식iN' %}
-        <table class="table">
-          <thead>
-            <tr class="table-succ-ess">
-              <th scope="col">번호</th>
-              <th scope="col">질문</th>
-              <th scope="col">답변자</th>
-              <th scope="col">답변</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if list %}
-              {% for content in list %}
+      {% elif detail == '지식iN' %}
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            검색어 :{{keyword}}
+            / 태그 :
+            {{detail}}
+          </div>
+          <div class="card-body">
+            <table class="table" id="datatablesSimple">
+              <thead>
                 <tr>
-                  <th scope="row">{{content.num}}</th>
-                  <th scope="row">{{content.question}}</th>
-                  <th scope="row"><img src="{{content.answer_img|default:" "}}" alt="" srcset="">{{content.answer_name}}</th>
-                  <td scope="row">
-                    <a href="{{content.question_url}}" class="text-decoration-none text-dark">
-                      {{content.answer|truncatechars:30}}
-                    </a>
-                  </td>
+                  <th scope="col">번호</th>
+                  <th scope="col">질문</th>
+                  <th scope="col">답변자</th>
+                  <th scope="col">답변</th>
                 </tr>
-              {% endfor %}
-            {% endif %}
-          </tbody>
-        </table>
+              </thead>
+              <tfoot>
+                <tr>
+                  <th scope="col">번호</th>
+                  <th scope="col">질문</th>
+                  <th scope="col">답변자</th>
+                  <th scope="col">답변</th>
+                </tr>
+              </tfoot>
+              <tbody>
+                {% if list %}
+                  {% for content in list %}
+                    <tr>
+                      <th scope="row">{{content.num}}</th>
+                      <th scope="row">{{content.question}}</th>
+                      <th scope="row"><img src="{{content.answer_img|default:" "}}" alt="" srcset="">{{content.answer_name}}</th>
+                      <td scope="row">
+                        <a href="{{content.question_url}}" class="text-decoration-none text-dark">
+                          {{content.answer|truncatechars:30}}
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       {% else %}
-        <table class="table">
-          <thead>
-            <tr class="table-succ-ess">
-              <th scope="col">번호</th>
-              <th scope="col">작성자</th>
-              <th scope="col">제목</th>
-              <th scope="col">링크/가격</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if list %}
-              {% for content in list %}
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            검색어 :{{keyword}}
+            / 태그 :
+            {{detail}}
+          </div>
+          <div class="card-body">
+            <table class="table" id="datatablesSimple">
+              <thead>
                 <tr>
-                  <th scope="row">{{content.num}}</th>
-                  <th scope="row"><img src="{{content.thumb_img|default:" "}}" alt="" srcset="">{{content.user}}</th>
-                  <td>
-                    <a href="{{content.url}}" class="text-decoration-none text-dark">
-                      {{content.title|truncatechars:30}}
-                    </a>
-                  </td>
-                  <td scope="row">
-                    {% if content.price %}
-                      {{content.price|truncatechars:20}}
-                    {% elif content.content %}
-                      {{content.content|truncatechars:20}}
-                    {% else %}
-                      {{content.url|truncatechars:20}}
-                    {% endif %}
-                  </td>
+                  <th scope="col">번호</th>
+                  <th scope="col">작성자</th>
+                  <th scope="col">제목</th>
+                  <th scope="col">링크/가격</th>
                 </tr>
-              {% endfor %}
+              </thead>
+              {% if list %}
+                <tfoot>
+                  <tr>
+                    <th scope="col">번호</th>
+                    <th scope="col">작성자</th>
+                    <th scope="col">제목</th>
+                    <th scope="col">링크/가격</th>
+                  </tr>
+                </tfoot>
+                <tbody>
 
-            {% else %}
+                  {% for content in list %}
+                    <tr>
+                      <th scope="row">{{content.num}}</th>
+                      <th scope="row"><img src="{{content.thumb_img|default:" "}}" alt="" srcset="">{{content.user}}</th>
+                      <td>
+                        <a href="{{content.url}}" class="text-decoration-none text-dark">
+                          {{content.title|truncatechars:30}}
+                        </a>
+                      </td>
+                      <td scope="row">
+                        {% if content.price %}
+                          {{content.price|truncatechars:20}}
+                        {% elif content.content %}
+                          {{content.content|truncatechars:20}}
+                        {% else %}
+                          {{content.url|truncatechars:20}}
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </div>
+            </div>
+          {% else %}
+            <tbody>
               <tr>
                 <td colspan="3">검색된 정보가 존재하지 않습니다.</td>
               </tr>
-            {% endif %}
-          </tbody>
-        </table>
+            </tbody>
+          </div>
+        </div>
       {% endif %}
-    </div>
-  </div>
+    </table>
+  {% endif %}
+</div>
+</div>
 {% endblock content %}
+
+{% block script %}{% endblock script %}
