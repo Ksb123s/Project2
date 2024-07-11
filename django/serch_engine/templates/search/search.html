@@ -2,17 +2,27 @@
 {% load static %}
 {% block content %}
 
-  <div class="container-fluid pb-3">
-    <div class="d-grid gap-3" style="grid-template-columns: 1fr 2fr;">
+  <div class="container-fluid pb-3 mt-5">
+    <div class="d-grid gap-3 mt-5" style="grid-template-columns: 1fr 2fr;">
       <div class="bg-body-tertiary border rounded-3">
-        <br>Hellow 검색 엔진에 오신걸 환영합니다.<br>
-        <br>이 사이트에 이용방식에 대해 알려 드리겠습니다.<br>
+        <br>Hellow 검색 엔진에 오신걸 환영합니다
+        <br>이 사이트에 이용방식에 대해 알려 드리겠습니다
         <br><br>
         <br><br>
         <br><br>
       </div>
       <div class="bg-body-tertiary border rounded-3">
-        <br><br><br><br><br><br><br><br><br><br>
+        <br>검색 기록 및 횟수
+        {% if records %}
+          {% for record in records %}
+            <br>{{record.keyword}}
+            검색 횟수
+            {{record.count}}
+            / 사이트 이름 :
+            {{record.engine_name}}/ 검색 서비스 :
+            {{record.detail_name}}
+          {% endfor %}
+        {% endif %}
       </div>
     </div>
   </div>

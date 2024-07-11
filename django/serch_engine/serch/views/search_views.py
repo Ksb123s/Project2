@@ -1,5 +1,12 @@
-from django.shortcuts import render, redirect
-from serch.models import search_data
+from django.shortcuts import render, redirect, get_object_or_404
+from serch.models import (
+    search_data,
+    Engine_name,
+    Detaile_name,
+    Search_Keyword_Record_Data,
+)
+from django.contrib.auth.decorators import login_required
+import re
 
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions
@@ -51,6 +58,7 @@ def scroll_all(browser, interval):
 # Create your views here.
 
 
+@login_required(login_url="common:login")
 def search(request):
     list = []
     interval = 2
@@ -72,7 +80,20 @@ def search(request):
                 element.send_keys(search_engine_keyword)
                 element.send_keys(Keys.ENTER)
                 time.sleep(interval)
-                return redirect("search")
+                detail_name = get_object_or_404(Detaile_name, name=detail)
+                engine_name = get_object_or_404(Engine_name, name=search_engine_name)
+                update_or_create_search_record(
+                    search_engine_keyword, engine_name, detail_name, request.user
+                )
+                record = Search_Keyword_Record_Data.objects.all()
+                context = {
+                    "list": list,
+                    "detail": detail,
+                    "keyword": search_engine_keyword,
+                    "records": record,
+                }
+                print(record)
+                return render(request, "Search/search.html", context)
             case "daum":
                 url = "https://www." + search_engine_name + ".net/"
                 browser.get(url)
@@ -82,25 +103,54 @@ def search(request):
                 element.send_keys(Keys.ENTER)
                 time.sleep(interval)
                 tab_list = browser.find_elements(By.CLASS_NAME, "tab")
-                print(tab_list)
-                time.sleep(interval)
-                return redirect("search")
-            case "naver":
-                list = naver_crawl(
-                    browser, interval, search_engine_name, search_engine_keyword, detail
+                detail_name = get_object_or_404(Detaile_name, name=detail)
+                engine_name = get_object_or_404(Engine_name, name=search_engine_name)
+                update_or_create_search_record(
+                    search_engine_keyword, engine_name, detail_name, request.user
                 )
+                record = Search_Keyword_Record_Data.objects.all()
+                time.sleep(interval)
                 context = {
                     "list": list,
                     "detail": detail,
                     "keyword": search_engine_keyword,
+                    "records": record,
                 }
+                print(record)
+                time.sleep(interval)
+                return render(request, "Search/search.html", context)
+            case "naver":
+                list = naver_crawl(
+                    request,
+                    browser,
+                    interval,
+                    search_engine_name,
+                    search_engine_keyword,
+                    detail,
+                )
+                # 검색 기록 저장 및 업데이트 코드
+                detail_name = get_object_or_404(Detaile_name, name=detail)
+                engine_name = get_object_or_404(Engine_name, name=search_engine_name)
+                update_or_create_search_record(
+                    search_engine_keyword, engine_name, detail_name, request.user
+                )
+                record = Search_Keyword_Record_Data.objects.all()
+                context = {
+                    "list": list,
+                    "detail": detail,
+                    "keyword": search_engine_keyword,
+                    "records": record,
+                }
+                print(record)
                 time.sleep(interval)
                 return render(request, "Search/search.html", context)
     context = {"list": list}
     return render(request, "Search/search.html", context)
 
 
-def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, detail):
+def naver_crawl(
+    request, browser, interval, search_engine_name, search_engine_keyword, detail
+):
     list = []
     url = "https://www." + search_engine_name + ".com/"
     browser.get(url)
@@ -139,13 +189,24 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
             time.sleep(interval)
             # book_list > ul > li:nth-child(1) > div > a.bookListItem_info_top__r54Eg.linkAnchor
             book_urls = soup.select("a.bookListItem_info_top__r54Eg.linkAnchor")
-            for idx in range(len(users)):
+            print()
+            for idx in range(min([len(users), len(titles), len(prices)])):
                 title = titles[idx].text.strip()
                 user = users[idx].text.strip()
                 price = prices[idx].text.strip()
                 book_url = book_urls[idx]["href"]
 
-                print(f"유저 : {user}/ 제목 :{title}/ 가격 : {price} ")
+                pattern = r"\d{1,3}(,\d{3})?"
+
+                match = re.search(pattern, price)
+                if match:
+                    # 매칭된 부분에서 쉼표(,)를 제거하고 숫자만 남깁니다.
+                    result = match.group().replace(",", "")
+                    # print(result)
+                else:
+                    result = 0
+
+                print(f"유저 : {user}/ 제목 :{title}/ 가격 : {result} ")
 
                 list.append(
                     {
@@ -156,6 +217,22 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
                         "url": book_url,
                     }
                 )
+                detail_name = get_object_or_404(Detaile_name, name=detail)
+                engine_name = get_object_or_404(Engine_name, name=search_engine_name)
+                try:
+                    Search_data = search_data(
+                        title=title,
+                        user=user,
+                        search_user=request.user,
+                        keyword=search_engine_keyword,
+                        engine_name=engine_name,
+                        detail_name=detail_name,
+                        price=result,
+                        url=book_url,
+                    )
+                    Search_data.save()
+                except:
+                    print("존재하는 데이터 입니다.")
 
         case "이미지":
             images = browser.find_elements(By.CSS_SELECTOR, ".thumb img")
@@ -233,7 +310,7 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
             # main_pack > section > div.api_subject_bx.type_noline > ul > li:nth-child(1) > div > div > div.nkindic_content > div.content_desc > .nkindic_source > a
             users = soup.select(".nkindic_source > a")
 
-            for idx in range(len(users)):
+            for idx in range(min([len(users), len(titles), len(contents)])):
                 title = titles[idx].text.strip()
                 content = contents[idx].text.strip()
                 user = users[idx].text.strip()
@@ -258,7 +335,9 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
             contents = soup.select(".dsc_area > a")
             # _inf_content_root\ _fe_influencer_section > div > div.keyword_challenge_wrap > ul > li:nth-child(1) > div.keyword_box_wrap > div.user_box > div.user_box_inner > a > div > img
             thumb_imgs = soup.select(".user_box_inner > a > div > img")
-            for idx in range(len(thumb_imgs)):
+            for idx in range(
+                min([len(Influencers), len(titles), len(contents), len(thumb_imgs)])
+            ):
                 title = titles[idx].text.strip()
                 content = contents[idx].text.strip()
                 user = Influencers[idx].text.strip()
@@ -291,7 +370,7 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
             # b#content > div.style_content__xWg5l > div.basicList_list_basis__uNBZx > div > div:nth-child(1) > div > div > div.product_info_area__xxCTi > div.product_price_area__eTg7I > strong > span.price > span
             prices = soup.select(".price > span")
             time.sleep(interval)
-            for idx in range(len(titles)):
+            for idx in range(min([len(users), len(titles), len(prices)])):
                 title = titles[idx].text.strip()
                 if users[idx].select_one("img") is not None:
                     user = users[idx].select_one("img")["alt"]
@@ -300,7 +379,17 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
                 shop_url = titles[idx]["href"]
                 price = prices[idx].text.strip()
 
-                print(f"유저 : {user}/ 제목 :{title}/ 가격 : {price} ")
+                pattern = r"\d{1,3}(,\d{3})?"
+
+                match = re.search(pattern, price)
+                if match:
+                    # 매칭된 부분에서 쉼표(,)를 제거하고 숫자만 남깁니다.
+                    result = match.group().replace(",", "")
+                    print(result)
+                else:
+                    result = 0
+
+                print(f"유저 : {user}/ 제목 :{title}/ 가격 : {result} ")
 
                 list.append(
                     {
@@ -311,6 +400,19 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
                         "url": shop_url,
                     }
                 )
+                detail_name = get_object_or_404(Detaile_name, name=detail)
+                engine_name = get_object_or_404(Engine_name, name=search_engine_name)
+                Search_data = search_data(
+                    title=title,
+                    user=user,
+                    search_user=request.user,
+                    keyword=search_engine_keyword,
+                    engine_name=engine_name,
+                    detail_name=detail_name,
+                    price=result,
+                    url=shop_url,
+                )
+                Search_data.save()
         # 수정 봐야함  어학 사전
         case "어학사전":
             soup = BeautifulSoup(browser.page_source, "html.parser")
@@ -338,7 +440,7 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
 
             # img_url_list = []
             # print("들어가기전 ", len(users))
-            for idx in range(len(users)):
+            for idx in range(min([len(users), len(contents)])):
                 user = users[idx].text.strip()
                 title = contents[idx].text.strip()
                 content_url = contents[idx]["href"]
@@ -352,6 +454,18 @@ def naver_crawl(browser, interval, search_engine_name, search_engine_keyword, de
                         "url": content_url,
                     }
                 )
+                detail_name = get_object_or_404(Detaile_name, name=detail)
+                engine_name = get_object_or_404(Engine_name, name=search_engine_name)
+                Search_data = search_data(
+                    title=title,
+                    user=user,
+                    search_user=request.user,
+                    keyword=search_engine_keyword,
+                    engine_name=engine_name,
+                    detail_name=detail_name,
+                    url=content_url,
+                )
+                Search_data.save()
             # print("들어간후 ", len(list))
     return list
 
@@ -362,3 +476,20 @@ def daum_crawl():
 
 def google_crawl():
     pass
+
+
+def update_or_create_search_record(keyword, engine_name, detail_name, search_user):
+    # 같은 정보가 이미 있는지 확인
+    record, created = Search_Keyword_Record_Data.objects.get_or_create(
+        keyword=keyword,
+        engine_name=engine_name,
+        detail_name=detail_name,
+        search_user=search_user,
+    )
+
+    if not created:
+        # 이미 존재하는 경우 count를 +1 증가시킴
+        record.count += 1
+        record.save()
+
+    return record
