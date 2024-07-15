@@ -6,24 +6,28 @@
       <div class="container-fluid px-4">
         <h1 class="mt-5">분석 및 검색 리스트</h1>
         <ol class="breadcrumb mb-4">
-          <li class="breadcrumb-item active">분석할 리스트 선택</li>
+          <button class="form_post_btn">
+            <li class="breadcrumb-item active">분석할 리스트 선택</li>
+          </button>
         </ol>
         <div>
-          <form action="" method="post" class="row">
-            <div class="col-xl-3 col-md-6">
+          <form action="" method="post" class="row data_chart">
+            {% csrf_token %}
+            <div class="col-xl-3 col-md-3">
               <div class="card bg-primary text-white mb-4">
                 <div class="card-body">분석 대상 선택</div>
                 <div class="card-footer d-flex align-items-center justify-content-between">
-                  <select class="form-select small text-white card-footer" name="site" id="site" aria-label="Default select example " style="border: none; outline: none; appearance: none; background-color: transparent">
+                  <select class="form-select small text-white card-footer" name="keyword" id="keyword" aria-label="Default select example " style="border: none; outline: none; appearance: none; background-color: transparent">
                     <option selected="selected" style="background-color: rgba(13, 110, 253, 1)">분석 키워드</option>
                     {% for k in keyword %}
                       <option value="{{k.keyword}}" style="background-color: rgba(13, 110, 253, 1)">{{k.keyword}}</option>
                     {% endfor %}
+                    <option value="all" style="background-color: rgba(13, 110, 253, 1)">전체</option>
                   </select>
                 </div>
               </div>
             </div>
-            <div class="col-xl-3 col-md-6">
+            <div class="col-xl-3 col-md-3">
               <div class="card bg-warning text-white mb-4">
                 <div class="card-body">검색한 사이트</div>
                 <div class="card-footer d-flex align-items-center justify-content-between">
@@ -37,85 +41,103 @@
                 </div>
               </div>
             </div>
-            <div class="col-xl-3 col-md-6">
+            <div class="col-xl-3 col-md-3">
               <div class="card bg-success text-white mb-4">
                 <div class="card-body">검색 기능</div>
                 <div class="card-footer d-flex align-items-center justify-content-between">
-                  <select class="form-select small text-white card-footer" name="site" id="site" aria-label="Default select example " style="border: none; outline: none; appearance: none; background-color: transparent">
+                  <select class="form-select small text-white card-footer" name="detail" id="detail" aria-label="Default select example " style="border: none; outline: none; appearance: none; background-color: transparent">
                     <option selected="selected" style="background-color: rgba(25, 135, 84, 1)">
                       검색 기능 선택</option>
                     {% for d in detail %}
                       <option value="{{d.name}}" style="background-color: rgba(25, 135, 84, 1)">{{d.name}}</option>
                     {% endfor %}
+                    <option value="all" style="background-color: rgba(25, 135, 84, 1)">전체</option>
                   </select>
                 </div>
               </div>
             </div>
-            <div class="col-xl-3 col-md-6">
+            <div class="col-xl-3 col-md-3">
               <div class="card bg-danger text-white mb-4">
-                <div class="card-body">Danger Card</div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                  <a class="small text-white stretched-link" href="#">View Details</a>
-                  <div class="small text-white">
-                    <i class="fas fa-angle-right"></i>
-                  </div>
+                <div class="card-body">상세 분석 조정</div>
+                <div class="card-footer d-flex align-items-center justify-content-between row">
+                  <select class="form-select small text-white card-footer col-xl-6 col-md-6" name="topic" id="topic" aria-label="Default select example " style="border: none; outline: none; appearance: none; background-color: transparent">
+                    <option selected="selected" style="background-color: rgba(220, 53, 69, 1)">
+                      분석 대상</option>
+                    <option value="title" style="background-color: rgba(220, 53, 69, 1)">제목</option>
+                    <option value="content" style="background-color: rgba(220, 53, 69, 1)">내용</option>
+                    <option value="user" style="background-color: rgba(220, 53, 69, 1)">글쓴이</option>
+                    <option value="image" style="background-color: rgba(220, 53, 69, 1)">이미지</option>
+                    <option value="created_at" style="background-color: rgba(220, 53, 69, 1)">검색날짜</option>
+                    <option value="price" style="background-color: rgba(220, 53, 69, 1)">가격</option>
+                    <option value="engine_name" style="background-color: rgba(220, 53, 69, 1)">사이트</option>
+                    <option value="url" style="background-color: rgba(220, 53, 69, 1)">링크</option>
+                  </select>
                 </div>
               </div>
             </div>
           </form>
         </div>
-        <div class="row">
-          <div class="col-xl-12">
-            <div class="card mb-4">
-              <div class="card-header">
-                <i class="fas fa-chart-area me-1"></i>
-                Area Chart Example
-              </div>
-              <div class="card-body">
-                <canvas id="myAreaChart" width="400" height="400"></canvas>
+        {% if datas %}
+          <div class="row">
+            <div class="col-xl-12">
+              <div class="card mb-4">
+                <div class="card-header">
+                  <i class="fas fa-chart-area me-1"></i>
+                  분석 차트
+                  <input type="radio" name="chart" id="L_chart" onclick="lchart();" chekced="chekced">
+                  선 형식 차트
+                  <input type="radio" name="chart" id="b_chart" onclick="bchart();">
+                  바 형식 차트
+                </div>
+
+                <div class="card-body">
+                  <canvas id="myAreaChart" width="200" height="200"></canvas>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="card mb-4">
-          <div class="card-header">
-            <i class="fas fa-table me-1"></i>
-            검색한 데이터 목록
+        {% endif %}
+        {% if datas %}
+          <div class="card mb-4">
+            <div class="card-header">
+              <i class="fas fa-table me-1"></i>
+              검색한 데이터 목록
+            </div>
+            <div class="card-body">
+              <table id="datatablesSimple">
+                <thead>
+                  <tr>
+                    <th>제목(title)</th>
+                    <th>내용(content)</th>
+                    <th>글쓴이(user)</th>
+                    <th>이미지(image)</th>
+                    <th>검색날짜(created_at)</th>
+                    <th>가격(price)</th>
+                    <th>검색어(keyword)</th>
+                    <th>사이트(engine_name)</th>
+                    <th>검색 기능(detail_name)</th>
+                    <th>링크(url)</th>
+                  </tr>
+                </thead>
+                <tfoot>
+                  <tr>
+                    <th>제목(title)</th>
+                    <th>내용(content)</th>
+                    <th>글쓴이(user)</th>
+                    <th>이미지(image)</th>
+                    <th>검색날짜(created_at)</th>
+                    <th>가격(price)</th>
+                    <th>검색어(keyword)</th>
+                    <th>사이트(engine_name)</th>
+                    <th>검색 기능(detail_name)</th>
+                    <th>링크(url)</th>
+                  </tr>
+                </tfoot>
+                <tbody id="data-table"></tbody>
+              </table>
+            </div>
           </div>
-          <div class="card-body">
-            <table id="datatablesSimple">
-              <thead>
-                <tr>
-                  <th>제목(title)</th>
-                  <th>내용(content)</th>
-                  <th>글쓴이(user)</th>
-                  <th>이미지(image)</th>
-                  <th>검색날짜(created_at)</th>
-                  <th>가격(price)</th>
-                  <th>검색어(keyword)</th>
-                  <th>사이트(engine_name)</th>
-                  <th>검색 기능(detail_name)</th>
-                  <th>링크(url)</th>
-                </tr>
-              </thead>
-              <tfoot>
-                <tr>
-                  <th>제목(title)</th>
-                  <th>내용(content)</th>
-                  <th>글쓴이(user)</th>
-                  <th>이미지(image)</th>
-                  <th>검색날짜(created_at)</th>
-                  <th>가격(price)</th>
-                  <th>검색어(keyword)</th>
-                  <th>사이트(engine_name)</th>
-                  <th>검색 기능(detail_name)</th>
-                  <th>링크(url)</th>
-                </tr>
-              </tfoot>
-              <tbody id="data-table"></tbody>
-            </table>
-          </div>
-        </div>
+        {% endif %}
       </div>
     </main>
     <footer class="py-4 bg-light mt-auto">
@@ -132,7 +154,7 @@
     </footer>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
-
+  <script src="{% static "js/scripts.js" %}"></script>
   <script>
     // Django 템플릿 변수에서 데이터 가져오기
     document.addEventListener("DOMContentLoaded", function () {
@@ -169,58 +191,170 @@
       }
     });
 
-    Chart.defaults.global.defaultFontFamily = '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
-    Chart.defaults.global.defaultFontColor = "#292b2c";
+    function lchart() {
+      Chart.defaults.global.defaultFontFamily = '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+      Chart.defaults.global.defaultFontColor = "#292b2c";
 
-    const datas = JSON.parse("{{ datas|escapejs }}");
-    // Price 데이터 추출
-    const prices = datas.map((data) => data.price || 0);
+      const datas = JSON.parse("{{ datas|escapejs }}");
 
-    // 제목 데이터 추출
-    const MAX_TITLE_LENGTH = 8; // 최대 허용 길이
-
-    const titles = datas.map((data) => {
-      let title = data.title;
-      if (title.length > MAX_TITLE_LENGTH) {
-        title = title.substring(0, MAX_TITLE_LENGTH) + "...";
+      const topic = "{{topic}}"
+      let topic_datas = ""
+      switch (topic) {
+        case "price":
+          topic_datas = datas.map((data) => data.price || 0);
+        case "title":
+          topic_datas = datas.map((data) => data.title || 0);
+        case "content":
+          topic_datas = datas.map((data) => data.content || 0);
+        case "user":
+          topic_datas = datas.map((data) => data.user || 0);
+        case "image":
+          topic_datas = datas.map((data) => data.image || 0);
+        case "created_at":
+          topic_datas = datas.map((data) => data.created_at || 0);
+        case "url":
+          topic_datas = datas.map((data) => data.url || 0);
+        default:
+          topic_datas = datas.map((data) => data.price || 0);
       }
-      return title;
-    });
+      // 제목 데이터 추출
+      const MAX_TITLE_LENGTH = 8; // 최대 허용 길이
+      console.log(topic_datas)
+      const titles = datas.map((data) => {
+        let title = data.title;
+        if (title.length > MAX_TITLE_LENGTH) {
+          title = title.substring(0, MAX_TITLE_LENGTH) + "...";
+        }
+        return title;
+      });
 
-    // Canvas 요소 선택
-    const ctx = document
-      .getElementById("myAreaChart")
-      .getContext("2d");
+      // Canvas 요소 선택
+      const ctx = document
+        .getElementById("myAreaChart")
+        .getContext("2d");
 
-    // Chart 생성
-    new Chart(ctx, {
-      type: "line", // Area 차트
-      data: {
-        labels: titles, // X축 레이블로 제목 사용
-        datasets: [
-          {
-            label: "Price",
-            data: prices,
-            fill: true, // 영역 채우기
-            backgroundColor: "rgba(54, 162, 235, 0.2)", // 영역 배경 색상
-            borderColor: "rgba(54, 162, 235, 1)", // 영역 테두리 색상
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        scales: {
-          yAxes: [
+      // Chart 생성
+      new Chart(ctx, {
+        type: "line", // Area 차트
+        data: {
+          labels: titles, // X축 레이블로 제목 사용
+          datasets: [
             {
-              ticks: {
-                beginAtZero: true,
-                fontSize: 14, // 글자 크기 설정
-              }
+              label: topic,
+              data: topic_datas,
+              fill: true, // 영역 채우기
+              backgroundColor: "rgba(54, 162, 235, 0.2)", // 영역 배경 색상
+              borderColor: "rgba(54, 162, 235, 1)", // 영역 테두리 색상
+              borderWidth: 0.5
             }
           ]
+        },
+        options: {
+          scales: {
+            yAxes: [
+              {
+                ticks: {
+                  beginAtZero: true,
+                  fontSize: 14, // 글자 크기 설정
+                }
+              }
+            ]
+          }
         }
+      });
+    }
+
+    function bchart() {
+      Chart.defaults.global.defaultFontFamily = '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+      Chart.defaults.global.defaultFontColor = '#292b2c';
+
+      const datas = JSON.parse("{{ datas|escapejs }}");
+      const topic = "{{ topic }}";
+
+      let topic_datas = "";
+      switch (topic) {
+        case "price":
+          topic_datas = datas.map((data) => data.price || 0);
+          break;
+        case "title":
+          topic_datas = datas.map((data) => data.title || 0);
+          break;
+        case "content":
+          topic_datas = datas.map((data) => data.content || 0);
+          break;
+        case "user":
+          topic_datas = datas.map((data) => data.user || 0);
+          break;
+        case "image":
+          topic_datas = datas.map((data) => data.image || 0);
+          break;
+        case "created_at":
+          topic_datas = datas.map((data) => data.count || 0);
+          break;
+        case "url":
+          topic_datas = datas.map((data) => data.url || 0);
+          break;
+        default:
+          topic_datas = datas.map((data) => data.price || 0);
+          break;
       }
-    });
+
+      // 제목 데이터 추출
+      const MAX_TITLE_LENGTH = 8; // 최대 허용 길이
+      console.log(topic_datas)
+      const titles = datas.map((data) => {
+        let title = data.title;
+        if (title.length > MAX_TITLE_LENGTH) {
+          title = title.substring(0, MAX_TITLE_LENGTH) + "...";
+        }
+        return title;
+      });
+      // Bar Chart 생성
+      const ctx = document
+        .getElementById("myAreaChart")
+        .getContext("2d");
+      var myLineChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: titles,
+          datasets: [
+            {
+              label: topic,
+              data: topic_datas,
+              fill: true, // 영역 채우기
+              backgroundColor: "rgba(54, 162, 235, 0.2)", // 영역 배경 색상
+              borderColor: "rgba(54, 162, 235, 1)", // 영역 테두리 색상
+              borderWidth: 0.5
+            }
+          ]
+        },
+        options: {
+          scales: {
+            yAxes: [
+              {
+                ticks: {
+                  beginAtZero: true,
+                  fontSize: 14, // 글자 크기 설정
+                }
+              }
+            ]
+          },
+          legend: {
+            display: false
+          }
+        }
+      });
+    }
+
+    document
+      .querySelector(".form_post_btn")
+      .addEventListener("click", (e) => {
+        e.preventDefault;
+
+        document
+          .querySelector(".data_chart")
+          .submit();
+      });
   </script>
 {% endblock content %}
 {% block script %}{% endblock script %}
